@@ -19,7 +19,7 @@ export class Scheduler {
    */
   public initialize(): void {
     console.log('📅 スケジューラーを初期化しました（現在はスケジュールされたタスクはありません）');
-    
+
     // 将来的にここに定期実行タスクを追加
     // 例: this.scheduleWeeklyMessage('0 9 * * 1', 'channelId', 'roleId', 'メッセージ');
   }
@@ -40,7 +40,7 @@ export class Scheduler {
     const job = cron.schedule(cronExpression, async () => {
       try {
         const channel = await this.client.channels.fetch(channelId);
-        
+
         // 型ガード: sendメソッドを持つチャンネル型に絞り込む
         if (!channel || !channel.isTextBased()) {
           console.error(`チャンネル ${channelId} が見つからないか、テキストチャンネルではありません`);
@@ -51,7 +51,7 @@ export class Scheduler {
         if (channel instanceof TextChannel || channel instanceof NewsChannel || channel instanceof ThreadChannel) {
           const mention = roleId ? `<@&${roleId}>` : '';
           const fullMessage = mention ? `${mention} ${message}` : message;
-          
+
           await channel.send(fullMessage);
           console.log(`✅ スケジュールされたメッセージを送信しました: ${channelId}`);
         } else {
@@ -84,7 +84,7 @@ export class Scheduler {
   ): void {
     const [hours, minutes] = time.split(':').map(Number);
     const cronExpression = `${minutes} ${hours} * * *`;
-    
+
     this.scheduleWeeklyMessage(cronExpression, channelId, roleId, message);
   }
 
