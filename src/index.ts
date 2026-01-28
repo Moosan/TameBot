@@ -21,7 +21,7 @@ const commands = new Collection<string, Command>();
 commands.set(pingCommand.data.name, pingCommand);
 
 // Bot起動時の処理
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   console.log(`✅ ${client.user?.tag} としてログインしました！`);
 
   // スラッシュコマンドの登録
