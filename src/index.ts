@@ -79,5 +79,19 @@ process.on('unhandledRejection', (error) => {
   console.error('未処理のPromise拒否:', error);
 });
 
+// グレースフルシャットダウン（SIGTERM / SIGINT）
+let isShuttingDown = false;
+
+function shutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`🛑 ${signal} を受信しました。シャットダウン中...`);
+  client.destroy();
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 // Botのログイン
 client.login(config.discordToken);
