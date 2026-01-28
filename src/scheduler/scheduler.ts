@@ -1,5 +1,6 @@
-import { Client, TextChannel, NewsChannel, ThreadChannel } from 'discord.js';
+import { Client } from 'discord.js';
 import * as cron from 'node-cron';
+import { isSendableChannel, logger } from '../utils';
 
 /**
  * 定期実行スケジューラー
@@ -18,7 +19,7 @@ export class Scheduler {
    * 将来的な拡張用のメソッド
    */
   public initialize(): void {
-    console.log('📅 スケジューラーを初期化しました（現在はスケジュールされたタスクはありません）');
+    logger.info('📅 スケジューラーを初期化しました（現在はスケジュールされたタスクはありません）');
 
     // 将来的にここに定期実行タスクを追加
     // 例: this.scheduleWeeklyMessage('0 9 * * 1', 'channelId', 'roleId', 'メッセージ');
@@ -37,36 +38,34 @@ export class Scheduler {
     roleId: string | null,
     message: string
   ): void {
-    const job = cron.schedule(cronExpression, async () => {
-      try {
-        const channel = await this.client.channels.fetch(channelId);
+    const job = cron.schedule(
+      cronExpression,
+      async () => {
+        try {
+          const channel = await this.client.channels.fetch(channelId);
 
-        // 型ガード: sendメソッドを持つチャンネル型に絞り込む
-        if (!channel || !channel.isTextBased()) {
-          console.error(`チャンネル ${channelId} が見つからないか、テキストチャンネルではありません`);
-          return;
-        }
+          if (!isSendableChannel(channel)) {
+            logger.error(`チャンネル ${channelId} が見つからないか、メッセージ送信に対応していません`);
+            return;
+          }
 
-        // TextChannel, NewsChannel, ThreadChannel など、sendメソッドを持つ型に絞り込む
-        if (channel instanceof TextChannel || channel instanceof NewsChannel || channel instanceof ThreadChannel) {
           const mention = roleId ? `<@&${roleId}>` : '';
           const fullMessage = mention ? `${mention} ${message}` : message;
 
           await channel.send(fullMessage);
-          console.log(`✅ スケジュールされたメッセージを送信しました: ${channelId}`);
-        } else {
-          console.error(`チャンネル ${channelId} はメッセージ送信に対応していません`);
+          logger.info(`✅ スケジュールされたメッセージを送信しました: ${channelId}`);
+        } catch (error) {
+          logger.error('スケジュールされたメッセージの送信に失敗しました:', error);
         }
-      } catch (error) {
-        console.error('スケジュールされたメッセージの送信に失敗しました:', error);
-      }
-    }, {
-      scheduled: true,
-      timezone: 'Asia/Tokyo', // 日本時間
-    });
+      },
+      {
+        scheduled: true,
+        timezone: 'Asia/Tokyo',
+      },
+    );
 
     this.jobs.push(job);
-    console.log(`📅 スケジュールを追加しました: ${cronExpression}`);
+    logger.info(`📅 スケジュールを追加しました: ${cronExpression}`);
   }
 
   /**
@@ -92,8 +91,8 @@ export class Scheduler {
    * すべてのスケジュールを停止
    */
   public stopAll(): void {
-    this.jobs.forEach(job => job.stop());
+    this.jobs.forEach((job) => job.stop());
     this.jobs = [];
-    console.log('🛑 すべてのスケジュールを停止しました');
+    logger.info('🛑 すべてのスケジュールを停止しました');
   }
 }

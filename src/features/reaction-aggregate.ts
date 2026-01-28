@@ -1,22 +1,7 @@
-import type {
-  Client,
-  MessageReaction,
-  Message,
-  TextChannel,
-  NewsChannel,
-  ThreadChannel,
-} from 'discord.js';
+import type { Client, MessageReaction, Message } from 'discord.js';
 import { config } from '../config';
-
-/** 集計結果 */
-export interface AggregateResult {
-  countA: number;
-  countB: number;
-  countC: number;
-  staff: number;
-  guest: number;
-  instance: number;
-}
+import type { AggregateResult } from '../types';
+import { isSendableChannel, logger } from '../utils';
 
 const TRIGGER = config.reactionTrigger;
 
@@ -36,7 +21,7 @@ async function fetchUserIds(reaction: MessageReaction): Promise<Set<string>> {
   try {
     await reaction.users.fetch();
   } catch (e) {
-    if (config.debugReactions) console.error('[DEBUG] reaction.users.fetch() 失敗:', e);
+    if (config.debugReactions) logger.error('reaction.users.fetch() 失敗:', e);
     return new Set();
   }
   const ids = new Set<string>();
@@ -44,6 +29,46 @@ async function fetchUserIds(reaction: MessageReaction): Promise<Set<string>> {
     if (!u.bot) ids.add(u.id);
   }
   return ids;
+}
+
+/** デバッグログ: メッセージ上のリアクション一覧を出力 */
+function logReactionDetails(reactions: Map<string, MessageReaction>): void {
+  if (!config.debugReactions) return;
+
+  type R = { emoji: { id: string | null; name: string | null } };
+  const envVal = (r: R) => (r.emoji.id ?? r.emoji.name ?? '') as string;
+  const isTrigger = (r: R) => emojiMatches(r, TRIGGER);
+  const list = [...reactions.values()];
+
+  logger.debug('---------- リアクション詳細ログ ----------');
+  logger.debug(`メッセージ上のリアクション数: ${list.length}`);
+
+  const labels = ['REACTION_A', 'REACTION_B', 'REACTION_C'] as const;
+  let labelIdx = 0;
+
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+    const v = envVal(r);
+    const triggerNote = isTrigger(r) ? ' [トリガー]' : '';
+    logger.debug(`  #${i + 1} id=${r.emoji.id ?? 'null'} name=${JSON.stringify(r.emoji.name)}${triggerNote}`);
+
+    if (!isTrigger(r) && v) {
+      if (labelIdx < 3) {
+        logger.debug(`      → .envにコピー可: ${labels[labelIdx]}=${v}`);
+        labelIdx++;
+      } else {
+        logger.debug(`      → .envにコピー可: REACTION_?=${v}`);
+      }
+    }
+  }
+
+  logger.debug(
+    '現在の設定:',
+    `REACTION_A=${JSON.stringify(config.reactionA)}`,
+    `REACTION_B=${JSON.stringify(config.reactionB)}`,
+    `REACTION_C=${JSON.stringify(config.reactionC)}`,
+  );
+  logger.debug('----------------------------------------');
 }
 
 /**
@@ -60,40 +85,7 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
   let usersB = new Set<string>();
   let usersC = new Set<string>();
 
-  if (config.debugReactions) {
-    type R = { emoji: { id: string | null; name: string | null } };
-    const envVal = (r: R) => (r.emoji.id ?? r.emoji.name ?? '') as string;
-    const isTrigger = (r: R) => emojiMatches(r, TRIGGER);
-    const list = [...reactions.values()];
-    console.log('[DEBUG] ---------- リアクション詳細ログ ----------');
-    console.log('[DEBUG] メッセージ上のリアクション数:', list.length);
-    const labels = ['REACTION_A', 'REACTION_B', 'REACTION_C'] as const;
-    let labelIdx = 0;
-    for (let i = 0; i < list.length; i++) {
-      const r = list[i];
-      const v = envVal(r);
-      const triggerNote = isTrigger(r) ? ' [トリガー]' : '';
-      console.log(
-        `[DEBUG]   #${i + 1} id=${r.emoji.id ?? 'null'} name=${JSON.stringify(r.emoji.name)}${triggerNote}`,
-      );
-      if (!isTrigger(r) && v) {
-        if (labelIdx < 3) {
-          const line = `${labels[labelIdx]}=${v}`;
-          console.log(`[DEBUG]       → .envにコピー可: ${line}`);
-          labelIdx++;
-        } else {
-          console.log(`[DEBUG]       → .envにコピー可: REACTION_?=${v}`);
-        }
-      }
-    }
-    console.log(
-      '[DEBUG] 現在の設定:',
-      `REACTION_A=${JSON.stringify(config.reactionA)}`,
-      `REACTION_B=${JSON.stringify(config.reactionB)}`,
-      `REACTION_C=${JSON.stringify(config.reactionC)}`,
-    );
-    console.log('[DEBUG] ----------------------------------------');
-  }
+  logReactionDetails(reactions);
 
   for (const r of reactions.values()) {
     if (emojiMatches(r, config.reactionA)) usersA = await fetchUserIds(r);
@@ -102,9 +94,7 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
   }
 
   if (config.debugReactions) {
-    console.log(
-      `[DEBUG] 集計対象 マッチ状況 A=${usersA.size} B=${usersB.size} C=${usersC.size}`,
-    );
+    logger.debug(`集計対象 マッチ状況 A=${usersA.size} B=${usersB.size} C=${usersC.size}`);
   }
 
   // 優先ルール: A > B > C。B から A にいる人、C から A or B にいる人を除く
@@ -166,11 +156,8 @@ export function registerReactionAggregate(client: Client): void {
 
     const message = msg as Message;
     const channel = message.channel;
-    if (!channel.isTextBased()) return;
 
-    const ch = channel as TextChannel | NewsChannel | ThreadChannel;
-    if (!('send' in ch) || typeof ch.send !== 'function') return;
-
+    if (!isSendableChannel(channel)) return;
     if (!shouldProcess(message.id)) return;
 
     try {
@@ -178,30 +165,30 @@ export function registerReactionAggregate(client: Client): void {
       if (!result) return;
 
       // 出力先: RESULT_THREAD_ID が設定されていればそのスレッド、なければ同じチャンネル
-      let targetChannel: TextChannel | NewsChannel | ThreadChannel = ch;
-      let targetName = ch.name;
+      let targetChannel = channel;
+      let targetName = channel.name;
 
       if (config.resultThreadId) {
         try {
           const thread = await client.channels.fetch(config.resultThreadId);
           if (thread && thread.isThread()) {
-            targetChannel = thread as ThreadChannel;
+            targetChannel = thread;
             targetName = thread.name;
           } else {
-            console.error(`RESULT_THREAD_ID=${config.resultThreadId} はスレッドではありません`);
+            logger.error(`RESULT_THREAD_ID=${config.resultThreadId} はスレッドではありません`);
           }
         } catch (e) {
-          console.error(`RESULT_THREAD_ID=${config.resultThreadId} の取得に失敗しました:`, e);
+          logger.error(`RESULT_THREAD_ID=${config.resultThreadId} の取得に失敗しました:`, e);
         }
       }
 
       await targetChannel.send(formatResult(result));
-      console.log(
+      logger.info(
         `📊 リアクション集計 送信完了 - チャンネル: ${targetName}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
       );
     } catch (e) {
-      console.error('リアクション集計エラー:', e);
-      await ch.send('リアクション集計の計算中にエラーが発生しました。').catch(() => {});
+      logger.error('リアクション集計エラー:', e);
+      await channel.send('リアクション集計の計算中にエラーが発生しました。').catch(() => {});
     }
   });
 }
