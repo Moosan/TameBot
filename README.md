@@ -74,34 +74,12 @@ npm start
 
 ## デプロイ
 
-### Railway でのデプロイ
+デプロイは **Railway** を想定しています。手順は [DEPLOY.md](./DEPLOY.md) を参照してください。
 
-1. [Railway](https://railway.app/) にアカウントを作成
-2. 「New Project」→「Deploy from GitHub repo」を選択
-3. このリポジトリを選択
-4. 「Variables」タブで環境変数を設定:
-   - `DISCORD_TOKEN`: Discord Bot Token
-   - `CLIENT_ID`: Discord Application Client ID
-   - `GUILD_ID`: （オプション）特定のサーバーID
-5. デプロイが自動的に開始されます
-
-### Render でのデプロイ
-
-1. [Render](https://render.com/) にアカウントを作成
-2. 「New」→「Web Service」を選択
-3. GitHubリポジトリを接続
-4. 以下の設定:
-   - **Environment**: Docker
-   - **Dockerfile Path**: `./Dockerfile`
-5. 環境変数を設定:
-   - `DISCORD_TOKEN`
-   - `CLIENT_ID`
-   - `GUILD_ID`（オプション）
-6. 「Create Web Service」をクリック
-
-### その他のプラットフォーム
-
-Dockerfileが含まれているため、Dockerをサポートする任意のプラットフォーム（AWS ECS、Google Cloud Run、Azure Container Instancesなど）でデプロイ可能です。
+1. [Railway](https://railway.app/) でアカウント作成
+2. 「New Project」→「Deploy from GitHub repo」でこのリポジトリを選択
+3. 「Variables」で `DISCORD_TOKEN`・`CLIENT_ID`（および任意で `GUILD_ID`）を設定
+4. デプロイが自動で開始され、完了後に Discord で `/ping` の動作を確認
 
 ## 将来の拡張: 定期メッセージ機能
 
