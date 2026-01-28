@@ -6,11 +6,11 @@ export const pingCommand = {
     .setDescription('Botの応答速度を確認します'),
 
   async execute(interaction: ChatInputCommandInteraction) {
-    const sent = await interaction.reply({
+    await interaction.reply({
       content: 'Pong! 計測中...',
-      fetchReply: true
     });
 
+    const sent = await interaction.fetchReply();
     const latency = sent.createdTimestamp - interaction.createdTimestamp;
     const apiLatency = Math.round(interaction.client.ws.ping);
 
