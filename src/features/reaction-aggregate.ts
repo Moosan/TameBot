@@ -21,10 +21,13 @@ export interface AggregateResult {
 const TRIGGER = config.reactionTrigger;
 
 /** 絵文字が設定値と一致するか（Unicode は name、カスタムは id で比較） */
-function emojiMatches(reaction: MessageReaction, value: string): boolean {
+function emojiMatches(
+  reaction: { emoji: { id: string | null; name: string | null } },
+  value: string,
+): boolean {
   const emoji = reaction.emoji;
   if (emoji.id && value === emoji.id) return true;
-  if (value === emoji.name) return true;
+  if (emoji.name && value === emoji.name) return true;
   return false;
 }
 
