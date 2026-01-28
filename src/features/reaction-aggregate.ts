@@ -130,10 +130,10 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
 export function formatResult(result: AggregateResult): string {
   return [
     `**リアクション集計結果**`,
-    `・A: ${result.countA}人 / B: ${result.countB}人 / C: ${result.countC}人`,
-    `・スタッフ: ${result.staff}人 (A+B+C、重複なし・A優先)`,
-    `・ゲスト: ${result.guest}人 (A×2)`,
-    `・インスタンス人数: **${result.instance}** (スタッフ+ゲスト+1)`,
+    `・イケケモ: ${result.countA}人 / 案内: ${result.countB}人 / サクラ: ${result.countC}人`,
+    `・スタッフ: ${result.staff}人 (イケケモ+案内+サクラ、重複なし・イケケモ優先)`,
+    `・ゲスト: ${result.guest}人 (イケケモ×2)`,
+    `・インスタンス人数: **${result.instance}** (スタッフ+ゲスト+Nekodon)`,
   ].join('\n');
 }
 
