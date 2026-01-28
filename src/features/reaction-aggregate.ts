@@ -177,9 +177,27 @@ export function registerReactionAggregate(client: Client): void {
       const result = await aggregateFromMessage(message);
       if (!result) return;
 
-      await ch.send(formatResult(result));
+      // 出力先: RESULT_THREAD_ID が設定されていればそのスレッド、なければ同じチャンネル
+      let targetChannel: TextChannel | NewsChannel | ThreadChannel = ch;
+      let targetName = ch.name;
+
+      if (config.resultThreadId) {
+        try {
+          const thread = await client.channels.fetch(config.resultThreadId);
+          if (thread && thread.isThread()) {
+            targetChannel = thread as ThreadChannel;
+            targetName = thread.name;
+          } else {
+            console.error(`RESULT_THREAD_ID=${config.resultThreadId} はスレッドではありません`);
+          }
+        } catch (e) {
+          console.error(`RESULT_THREAD_ID=${config.resultThreadId} の取得に失敗しました:`, e);
+        }
+      }
+
+      await targetChannel.send(formatResult(result));
       console.log(
-        `📊 リアクション集計 送信完了 - チャンネル: ${ch.name}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
+        `📊 リアクション集計 送信完了 - チャンネル: ${targetName}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
       );
     } catch (e) {
       console.error('リアクション集計エラー:', e);

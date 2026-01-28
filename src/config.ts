@@ -16,6 +16,9 @@ export const config = {
 
   /** リアクション集計のデバッグログ（DEBUG_REACTIONS=1 で有効） */
   debugReactions: process.env.DEBUG_REACTIONS === '1',
+
+  /** 集計結果の出力先スレッドID（指定しない場合は同じチャンネルに投稿） */
+  resultThreadId: process.env.RESULT_THREAD_ID || '',
 };
 
 // 必須環境変数のチェック
