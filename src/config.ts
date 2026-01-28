@@ -9,10 +9,13 @@ export const config = {
 
   /** 集計トリガー用リアクション（このリアクションが付くと集計実行） */
   reactionTrigger: process.env.REACTION_TRIGGER || '📊',
-  /** 集計対象リアクション A,B,C（カンマ区切り。Unicode絵文字またはカスタム絵文字ID） */
+  /** 集計対象リアクション A,B,C（Unicode絵文字またはカスタム絵文字ID） */
   reactionA: process.env.REACTION_A || '🅰️',
   reactionB: process.env.REACTION_B || '🅱️',
   reactionC: process.env.REACTION_C || '©️',
+
+  /** リアクション集計のデバッグログ（DEBUG_REACTIONS=1 で有効） */
+  debugReactions: process.env.DEBUG_REACTIONS === '1',
 };
 
 // 必須環境変数のチェック

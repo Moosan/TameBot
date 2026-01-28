@@ -36,6 +36,7 @@
 | `REACTION_A` | 集計対象 A（例: 🅰️） | — |
 | `REACTION_B` | 集計対象 B（例: 🅱️） | — |
 | `REACTION_C` | 集計対象 C（例: ©️） | — |
+| `DEBUG_REACTIONS` | `1` でリアクション集計の詳細ログ出力（デバッグ用） | — |
 
 ### 4. デプロイの確認
 
@@ -91,6 +92,12 @@ git push -u origin main
 
 - `Dockerfile` や `package.json` の記述を確認
 - ログでビルドエラーの詳細を確認
+
+### リアクション集計で「メンバーが取得できない」
+
+- 詳細は [docs/REACTION_TROUBLESHOOTING.md](./docs/REACTION_TROUBLESHOOTING.md) を参照
+- **招待時の Bot 権限**で **Read Message History**（メッセージ履歴の閲覧）を付与し、**新しい招待URLで再招待**しているか確認
+- `DEBUG_REACTIONS=1` を設定して再デプロイし、ログで絵文字の一致・`fetch` エラーを確認
 
 ## 料金
 

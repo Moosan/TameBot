@@ -33,7 +33,12 @@ function emojiMatches(
 
 /** リアクションからユーザーID集合を取得（Bot除外） */
 async function fetchUserIds(reaction: MessageReaction): Promise<Set<string>> {
-  await reaction.users.fetch();
+  try {
+    await reaction.users.fetch();
+  } catch (e) {
+    if (config.debugReactions) console.error('[DEBUG] reaction.users.fetch() 失敗:', e);
+    return new Set();
+  }
   const ids = new Set<string>();
   for (const [, u] of reaction.users.cache) {
     if (!u.bot) ids.add(u.id);
@@ -55,10 +60,51 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
   let usersB = new Set<string>();
   let usersC = new Set<string>();
 
+  if (config.debugReactions) {
+    type R = { emoji: { id: string | null; name: string | null } };
+    const envVal = (r: R) => (r.emoji.id ?? r.emoji.name ?? '') as string;
+    const isTrigger = (r: R) => emojiMatches(r, TRIGGER);
+    const list = [...reactions.values()];
+    console.log('[DEBUG] ---------- リアクション詳細ログ ----------');
+    console.log('[DEBUG] メッセージ上のリアクション数:', list.length);
+    const labels = ['REACTION_A', 'REACTION_B', 'REACTION_C'] as const;
+    let labelIdx = 0;
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i];
+      const v = envVal(r);
+      const triggerNote = isTrigger(r) ? ' [トリガー]' : '';
+      console.log(
+        `[DEBUG]   #${i + 1} id=${r.emoji.id ?? 'null'} name=${JSON.stringify(r.emoji.name)}${triggerNote}`,
+      );
+      if (!isTrigger(r) && v) {
+        if (labelIdx < 3) {
+          const line = `${labels[labelIdx]}=${v}`;
+          console.log(`[DEBUG]       → .envにコピー可: ${line}`);
+          labelIdx++;
+        } else {
+          console.log(`[DEBUG]       → .envにコピー可: REACTION_?=${v}`);
+        }
+      }
+    }
+    console.log(
+      '[DEBUG] 現在の設定:',
+      `REACTION_A=${JSON.stringify(config.reactionA)}`,
+      `REACTION_B=${JSON.stringify(config.reactionB)}`,
+      `REACTION_C=${JSON.stringify(config.reactionC)}`,
+    );
+    console.log('[DEBUG] ----------------------------------------');
+  }
+
   for (const r of reactions.values()) {
     if (emojiMatches(r, config.reactionA)) usersA = await fetchUserIds(r);
     else if (emojiMatches(r, config.reactionB)) usersB = await fetchUserIds(r);
     else if (emojiMatches(r, config.reactionC)) usersC = await fetchUserIds(r);
+  }
+
+  if (config.debugReactions) {
+    console.log(
+      `[DEBUG] 集計対象 マッチ状況 A=${usersA.size} B=${usersB.size} C=${usersC.size}`,
+    );
   }
 
   // 優先ルール: A > B > C。B から A にいる人、C から A or B にいる人を除く
