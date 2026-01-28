@@ -1,7 +1,17 @@
-import { Client, GatewayIntentBits, Collection, REST, Routes, ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  Partials,
+  Collection,
+  REST,
+  Routes,
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+} from 'discord.js';
 import { config } from './config';
 import { pingCommand } from './commands/ping';
 import { Scheduler } from './scheduler/scheduler';
+import { registerReactionAggregate } from './features/reaction-aggregate';
 
 // コマンドの型定義
 interface Command {
@@ -12,13 +22,23 @@ interface Command {
 // Discord Bot クライアントの作成
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds, // スラッシュコマンドとギルド情報に必要
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
+  ],
+  partials: [
+    Partials.Message,
+    Partials.Channel,
+    Partials.Reaction,
   ],
 });
 
 // コマンドのコレクション
 const commands = new Collection<string, Command>();
 commands.set(pingCommand.data.name, pingCommand);
+
+// リアクション集計（トリガー絵文字で A/B/C 集計→同一チャンネルに結果投稿）
+registerReactionAggregate(client);
 
 // Bot起動時の処理
 client.once('clientReady', async () => {

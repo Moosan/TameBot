@@ -1,0 +1,140 @@
+import type {
+  Client,
+  MessageReaction,
+  Message,
+  TextChannel,
+  NewsChannel,
+  ThreadChannel,
+} from 'discord.js';
+import { config } from '../config';
+
+/** 集計結果 */
+export interface AggregateResult {
+  countA: number;
+  countB: number;
+  countC: number;
+  staff: number;
+  guest: number;
+  instance: number;
+}
+
+const TRIGGER = config.reactionTrigger;
+
+/** 絵文字が設定値と一致するか（Unicode は name、カスタムは id で比較） */
+function emojiMatches(reaction: MessageReaction, value: string): boolean {
+  const emoji = reaction.emoji;
+  if (emoji.id && value === emoji.id) return true;
+  if (value === emoji.name) return true;
+  return false;
+}
+
+/** リアクションからユーザーID集合を取得（Bot除外） */
+async function fetchUserIds(reaction: MessageReaction): Promise<Set<string>> {
+  await reaction.users.fetch();
+  const ids = new Set<string>();
+  for (const [, u] of reaction.users.cache) {
+    if (!u.bot) ids.add(u.id);
+  }
+  return ids;
+}
+
+/**
+ * メッセージの A/B/C リアクションを集計する。
+ * 優先ルール: A > B > C（同一ユーザーは重複せず、優先度の高いものに1回だけカウント）
+ */
+export async function aggregateFromMessage(message: Message): Promise<AggregateResult | null> {
+  await message.fetch();
+  const channel = message.channel;
+  if (!channel.isTextBased()) return null;
+
+  const reactions = message.reactions.cache;
+  let usersA = new Set<string>();
+  let usersB = new Set<string>();
+  let usersC = new Set<string>();
+
+  for (const r of reactions.values()) {
+    if (emojiMatches(r, config.reactionA)) usersA = await fetchUserIds(r);
+    else if (emojiMatches(r, config.reactionB)) usersB = await fetchUserIds(r);
+    else if (emojiMatches(r, config.reactionC)) usersC = await fetchUserIds(r);
+  }
+
+  // 優先ルール: A > B > C。B から A にいる人、C から A or B にいる人を除く
+  const onlyB = new Set(usersB);
+  const onlyC = new Set(usersC);
+  for (const id of usersA) {
+    onlyB.delete(id);
+    onlyC.delete(id);
+  }
+  for (const id of onlyB) onlyC.delete(id);
+
+  const countA = usersA.size;
+  const countB = onlyB.size;
+  const countC = onlyC.size;
+  const staff = countA + countB + countC;
+  const guest = countA * 2;
+  const instance = staff + guest + 1;
+
+  return { countA, countB, countC, staff, guest, instance };
+}
+
+/** 集計結果をテキストで整形 */
+export function formatResult(result: AggregateResult): string {
+  return [
+    `**リアクション集計結果**`,
+    `・A: ${result.countA}人 / B: ${result.countB}人 / C: ${result.countC}人`,
+    `・スタッフ: ${result.staff}人 (A+B+C、重複なし・A優先)`,
+    `・ゲスト: ${result.guest}人 (A×2)`,
+    `・インスタンス人数: **${result.instance}** (スタッフ+ゲスト+1)`,
+  ].join('\n');
+}
+
+/** 同一メッセージへの連打対策: 直近で処理したメッセージIDと時刻 */
+const lastProcessed = new Map<string, number>();
+const DEBOUNCE_MS = 5000;
+
+function shouldProcess(messageId: string): boolean {
+  const now = Date.now();
+  const last = lastProcessed.get(messageId);
+  if (last != null && now - last < DEBOUNCE_MS) return false;
+  lastProcessed.set(messageId, now);
+  return true;
+}
+
+/** messageReactionAdd 用ハンドラを登録する */
+export function registerReactionAggregate(client: Client): void {
+  client.on('messageReactionAdd', async (reaction, user) => {
+    if (user.bot) return;
+    if (!emojiMatches(reaction, TRIGGER)) return;
+
+    const msg = reaction.message;
+    if (msg.partial) {
+      try {
+        await msg.fetch();
+      } catch {
+        return;
+      }
+    }
+
+    const message = msg as Message;
+    const channel = message.channel;
+    if (!channel.isTextBased()) return;
+
+    const ch = channel as TextChannel | NewsChannel | ThreadChannel;
+    if (!('send' in ch) || typeof ch.send !== 'function') return;
+
+    if (!shouldProcess(message.id)) return;
+
+    try {
+      const result = await aggregateFromMessage(message);
+      if (!result) return;
+
+      await ch.send(formatResult(result));
+      console.log(
+        `📊 リアクション集計 送信完了 - チャンネル: ${ch.name}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
+      );
+    } catch (e) {
+      console.error('リアクション集計エラー:', e);
+      await ch.send('リアクション集計の計算中にエラーが発生しました。').catch(() => {});
+    }
+  });
+}

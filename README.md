@@ -4,8 +4,11 @@
 
 ## 機能
 
-- `/ping` コマンド: Botの応答速度を確認
-- 定期実行スケジューラー: 将来的に毎週特定の曜日・時間にロールメンション付きでメッセージを送る機能を追加可能
+- **`/ping`** コマンド: Botの応答速度を確認
+- **リアクション集計**: トリガー用リアクション（デフォルト 📊）を付けると、同一メッセージの A/B/C リアクションを集計し、同じチャンネルに結果を投稿
+  - スタッフ = A+B+C（重複なし・A→B→C の優先）、ゲスト = A×2、インスタンス人数 = スタッフ+ゲスト+1
+  - トリガー・A/B/C は環境変数で変更可能（`.env` の `REACTION_*`）
+- **定期実行スケジューラー**: 将来的に毎週特定の曜日・時間にロールメンション付きでメッセージを送る機能を追加可能
 
 ## セットアップ
 
@@ -44,8 +47,7 @@ npm --version
 3. 「Bot」タブに移動し、「Add Bot」をクリック
 4. 「Token」セクションで「Reset Token」をクリックしてトークンを取得（後で使用します）
 5. **「Privileged Gateway Intents」セクション**を確認
-   - 現在のBotは`Guilds` Intentのみを使用（デフォルトで有効）
-   - 特別な設定は不要です
+   - 特権Intentは使用していません。`Guilds`・`Guild Messages`・`Guild Message Reactions` は通常のIntentで問題ありません。
 6. 「OAuth2」→「URL Generator」に移動
    - Scopes: `bot`, `applications.commands` を選択
    - Bot Permissions: 必要に応じて権限を選択（最低限: 「Send Messages」）

@@ -32,6 +32,10 @@
 | `DISCORD_TOKEN` | Discord Bot Token | ✅ |
 | `CLIENT_ID` | Discord Application Client ID | ✅ |
 | `GUILD_ID` | 特定のサーバーID（オプション） | — |
+| `REACTION_TRIGGER` | 集計トリガー用リアクション（例: 📊） | — |
+| `REACTION_A` | 集計対象 A（例: 🅰️） | — |
+| `REACTION_B` | 集計対象 B（例: 🅱️） | — |
+| `REACTION_C` | 集計対象 C（例: ©️） | — |
 
 ### 4. デプロイの確認
 
