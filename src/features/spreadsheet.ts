@@ -46,12 +46,39 @@ interface MemberRowInternal {
  */
 async function fetchMembersFromMessage(message: Message): Promise<MemberRowInternal[]> {
   const guild = message.guild;
-  if (!guild) return [];
+  if (!guild) {
+    if (config.debugSpreadsheet) logger.info('[DEBUG_SPREADSHEET] メンバー取得: ギルドなし（DM等） → 0人');
+    return [];
+  }
 
   const mentioned = roleIdsMentionedInMessage(message.content ?? '');
   const ourRoleIds = Object.values(ROLE_IDS).filter(Boolean);
   const relevant = ourRoleIds.filter((id) => mentioned.has(id));
-  if (relevant.length === 0) return [];
+
+  if (config.debugSpreadsheet) {
+    logger.info(
+      '[DEBUG_SPREADSHEET] メンバー取得: メッセージ内ロールメンションID =',
+      [...mentioned].join(', ') || '(なし)',
+    );
+    logger.info(
+      '[DEBUG_SPREADSHEET] メンバー取得: 設定ロール イケケモ=%s ケモ案内=%s ケモ裏方=%s',
+      config.roleIkemo || '(未設定)',
+      config.roleAnnai || '(未設定)',
+      config.roleUraba || '(未設定)',
+    );
+    logger.info(
+      '[DEBUG_SPREADSHEET] メンバー取得: 一致（対象）= %s',
+      relevant.length ? relevant.join(', ') : '(なし)',
+    );
+  }
+
+  if (relevant.length === 0) {
+    if (config.debugSpreadsheet)
+      logger.info(
+        '[DEBUG_SPREADSHEET] メンバー取得スキップ: 対象ロールがメッセージにメンションされていないか、設定ロールIDと一致しません',
+      );
+    return [];
+  }
 
   try {
     await guild.members.fetch();
@@ -59,6 +86,9 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
     logger.error('ギルドメンバー取得失敗:', e);
     return [];
   }
+
+  if (config.debugSpreadsheet)
+    logger.info('[DEBUG_SPREADSHEET] メンバー取得: ギルドメンバー数 =', guild.members.cache.size);
 
   const seen = new Set<string>();
   const rows: MemberRowInternal[] = [];
@@ -79,6 +109,11 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
       status: '未入力',
     });
   }
+
+  if (config.debugSpreadsheet && rows.length === 0)
+    logger.info(
+      '[DEBUG_SPREADSHEET] メンバー取得: 対象ロール所持メンバー0人（ギルド内にイケケモ・ケモ案内・ケモ裏方のいずれも持つメンバーがいないか、いずれもBot）',
+    );
 
   return rows;
 }
