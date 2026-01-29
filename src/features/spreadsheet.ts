@@ -171,5 +171,17 @@ export async function runSpreadsheetSync(
   const sheetRows = toSheetRows(members);
 
   const payload = buildSpreadsheetPayload(sheetRows, aggregate);
+
+  if (config.debugSpreadsheet) {
+    logger.info('[DEBUG_SPREADSHEET] ---------- スプシ送信予定データ ----------');
+    logger.info('[DEBUG_SPREADSHEET] シート1:', payload.sheet1Name, '| シート2:', payload.sheet2Name);
+    logger.info('[DEBUG_SPREADSHEET] メンバー数:', payload.members.length);
+    payload.members.forEach((m, i) => {
+      logger.info(`[DEBUG_SPREADSHEET]   #${i + 1} ${m.name} | ${m.status} | ${m.role}`);
+    });
+    logger.info('[DEBUG_SPREADSHEET] 集計:', JSON.stringify(payload.aggregate));
+    logger.info('[DEBUG_SPREADSHEET] ----------------------------------------');
+  }
+
   await sendToSpreadsheet(payload);
 }

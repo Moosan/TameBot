@@ -37,6 +37,9 @@ export const config = {
   /** スプシのシート名（可変） */
   sheet1Name: process.env.SHEET1_NAME || 'シート1',
   sheet2Name: process.env.SHEET2_NAME || 'シート2',
+
+  /** スプシ送信予定データをログ出力（DEBUG_SPREADSHEET=1 で有効） */
+  debugSpreadsheet: process.env.DEBUG_SPREADSHEET === '1',
 };
 
 // 必須環境変数のチェック
