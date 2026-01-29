@@ -77,7 +77,7 @@ function doPost(e) {
         var rows = members.map(function (m) {
           return [m.name || '', m.status || '未入力', m.role || ''];
         });
-        sh1.getRange(2, 1, 1 + rows.length, 3).setValues(rows);
+        sh1.getRange(2, 1, rows.length, 3).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');
       } else {
         log('[GAS] シート1 データ行なし（メンバー0件）');
