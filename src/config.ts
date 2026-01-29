@@ -26,9 +26,10 @@ export const config = {
   /** 欠席専用リアクション（このみのユーザー → 欠席） */
   reactionAbsent: process.env.REACTION_ABSENT || '',
 
-  /** ロールID（イケケモ > ケモ案内 > ケモ裏方 > ケモ情報部 の優先で割り振り） */
+  /** ロールID（イケケモ > ケモ案内 > [ケモcafe] > ケモ裏方 > ケモ情報部 の優先で割り振り） */
   roleIkemo: process.env.ROLE_IKEMO || '',
   roleAnnai: process.env.ROLE_ANNAI || '',
+  roleCafe: process.env.ROLE_CAFE || '',
   roleUraba: process.env.ROLE_URABATA || '',
   roleJohobu: process.env.ROLE_JOHOBU || '',
 

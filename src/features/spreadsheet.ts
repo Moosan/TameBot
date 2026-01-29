@@ -9,10 +9,11 @@ import type {
 } from '../types';
 import { logger } from '../utils';
 
-const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', 'ケモ裏方', 'ケモ情報部'];
+const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', '[ケモcafe]', 'ケモ裏方', 'ケモ情報部'];
 const ROLE_IDS: Record<SheetRole, string> = {
   イケケモ: config.roleIkemo,
   ケモ案内: config.roleAnnai,
+  '[ケモcafe]': config.roleCafe,
   ケモ裏方: config.roleUraba,
   ケモ情報部: config.roleJohobu,
 };
@@ -33,9 +34,9 @@ interface MemberRowInternal {
 }
 
 /**
- * 4ロール（イケケモ・ケモ案内・ケモ裏方・ケモ情報部）のいずれかに属するメンバーを収集。
- * メッセージのロールメンションには依存せず、常に4ロール全員を取得する。
- * 優先ルール: イケケモ > ケモ案内 > ケモ裏方 > ケモ情報部 で1ロールに割り振る。
+ * 5ロール（イケケモ・ケモ案内・[ケモcafe]・ケモ裏方・ケモ情報部）のいずれかに属するメンバーを収集。
+ * メッセージのロールメンションには依存せず、常に5ロール全員を取得する。
+ * 優先ルール: イケケモ > ケモ案内 > [ケモcafe] > ケモ裏方 > ケモ情報部 で1ロールに割り振る。
  */
 async function fetchMembersFromMessage(message: Message): Promise<MemberRowInternal[]> {
   const guild = message.guild;
@@ -46,9 +47,10 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
 
   if (config.debugSpreadsheet) {
     logger.info(
-      '[DEBUG_SPREADSHEET] メンバー取得: 設定ロール イケケモ=%s ケモ案内=%s ケモ裏方=%s ケモ情報部=%s',
+      '[DEBUG_SPREADSHEET] メンバー取得: 設定ロール イケケモ=%s ケモ案内=%s [ケモcafe]=%s ケモ裏方=%s ケモ情報部=%s',
       config.roleIkemo || '(未設定)',
       config.roleAnnai || '(未設定)',
+      config.roleCafe || '(未設定)',
       config.roleUraba || '(未設定)',
       config.roleJohobu || '(未設定)',
     );
@@ -83,7 +85,7 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
 
   if (config.debugSpreadsheet && rows.length === 0)
     logger.info(
-      '[DEBUG_SPREADSHEET] メンバー取得: 対象ロール所持メンバー0人（ギルド内に4ロールのいずれも持つメンバーがいないか、いずれもBot）',
+      '[DEBUG_SPREADSHEET] メンバー取得: 対象ロール所持メンバー0人（ギルド内に5ロールのいずれも持つメンバーがいないか、いずれもBot）',
     );
 
   return rows;
@@ -115,12 +117,13 @@ function toSheetRows(rows: MemberRowInternal[], reactionUserSets: ReactionUserSe
   }));
 }
 
-/** ロール順（イケケモ → ケモ案内 → ケモ裏方 → ケモ情報部）、同ロール内は名前の辞書順 */
+/** ロール順（イケケモ → ケモ案内 → [ケモcafe] → ケモ裏方 → ケモ情報部）、同ロール内は名前の辞書順 */
 const ROLE_SORT_ORDER: Record<SheetRole, number> = {
   イケケモ: 0,
   ケモ案内: 1,
-  ケモ裏方: 2,
-  ケモ情報部: 3,
+  '[ケモcafe]': 2,
+  ケモ裏方: 3,
+  ケモ情報部: 4,
 };
 
 function sortMembersForSpreadsheet(members: SheetMemberRow[]): SheetMemberRow[] {

@@ -40,6 +40,7 @@
 | `REACTION_ABSENT` | 欠席専用リアクション（このみ → 欠席） | — |
 | `ROLE_IKEMO` | ロールID（イケケモ） | スプシ連携時 |
 | `ROLE_ANNAI` | ロールID（ケモ案内） | スプシ連携時 |
+| `ROLE_CAFE` | ロールID（[ケモcafe]） | スプシ連携時 |
 | `ROLE_URABATA` | ロールID（ケモ裏方） | スプシ連携時 |
 | `ROLE_JOHOBU` | ロールID（ケモ情報部） | スプシ連携時 |
 | `SPREADSHEET_API_URL` | App Script Web App の URL（未設定ならスプシ送信なし） | — |
@@ -119,7 +120,7 @@ git push -u origin main
 ### スプシ連携でメンバーが空・送信しない
 
 - **Server Members Intent** を有効にし、Bot を再招待しているか確認
-- `ROLE_IKEMO` / `ROLE_ANNAI` / `ROLE_URABATA` / `ROLE_JOHOBU` に正しいロールIDを設定しているか確認（4ロールいずれかに属するメンバーを取得）
+- `ROLE_IKEMO` / `ROLE_ANNAI` / `ROLE_CAFE` / `ROLE_URABATA` / `ROLE_JOHOBU` に正しいロールIDを設定しているか確認（5ロールいずれかに属するメンバーを取得）
 - App Script は [appscript/README](./appscript/README.md) の手順でデプロイし、**アクセス: 全員** にしているか確認
 
 **`DEBUG_SPREADSHEET=1` でログを確認する**
@@ -129,7 +130,7 @@ git push -u origin main
 | ログの内容 | 確認すること |
 |-----------|----------------|
 | **ギルドメンバー数 = 0** | Server Members Intent 有効・再招待済みか。Bot がメンバー一覧を取得できていない。 |
-| **対象ロール所持メンバー0人（ギルド内に…）** | イケケモ・ケモ案内・ケモ裏方・ケモ情報部のいずれかを**誰かが持っているか**。4ロールのいずれも持つメンバーがいないと0人になる。 |
+| **対象ロール所持メンバー0人（ギルド内に…）** | イケケモ・ケモ案内・[ケモcafe]・ケモ裏方・ケモ情報部のいずれかを**誰かが持っているか**。5ロールのいずれも持つメンバーがいないと0人になる。 |
 
 ### スプシ API で 401 が出る
 
