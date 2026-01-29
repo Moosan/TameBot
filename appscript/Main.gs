@@ -75,7 +75,7 @@ function doPost(e) {
 
       if (members.length > 0) {
         var rows = members.map(function (m) {
-          return [m.name || '', m.reactionLabel || '未入力', m.role || ''];
+          return [m.name || '', m.reactionLabel || '未入力🤔', m.role || ''];
         });
         sh1.getRange(2, 1, rows.length, 3).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');

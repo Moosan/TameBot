@@ -9,11 +9,11 @@ import type {
 } from '../types';
 import { logger } from '../utils';
 
-const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', '[ケモcafe]', 'ケモ裏方', 'ケモ情報部'];
+const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', 'ケモcafe', 'ケモ裏方', 'ケモ情報部'];
 const ROLE_IDS: Record<SheetRole, string> = {
   イケケモ: config.roleIkemo,
   ケモ案内: config.roleAnnai,
-  '[ケモcafe]': config.roleCafe,
+  ケモcafe: config.roleCafe,
   ケモ裏方: config.roleUraba,
   ケモ情報部: config.roleJohobu,
 };
@@ -101,12 +101,12 @@ export interface ReactionUserSets {
 
 /** 優先順: 欠席 > 個室(A) > 案内(B) > サクラ(C) > 行けたら行く(その他) > 未入力 */
 function computeReactionLabel(userId: string, sets: ReactionUserSets): ReactionDisplayLabel {
-  if (sets.absentUserIds.has(userId)) return '欠席';
-  if (sets.userIdsReactedA.has(userId)) return '個室';
-  if (sets.userIdsReactedB.has(userId)) return '案内';
-  if (sets.userIdsReactedC.has(userId)) return 'サクラ';
-  if (sets.reactedUserIds.has(userId)) return '行けたら行く';
-  return '未入力';
+  if (sets.absentUserIds.has(userId)) return '欠席❌';
+  if (sets.userIdsReactedA.has(userId)) return '個室🥂';
+  if (sets.userIdsReactedB.has(userId)) return '案内👔';
+  if (sets.userIdsReactedC.has(userId)) return 'サクラ🌸';
+  if (sets.reactedUserIds.has(userId)) return '行けたら行く🙇';
+  return '未入力🤔';
 }
 
 function toSheetRows(rows: MemberRowInternal[], reactionUserSets: ReactionUserSets): SheetMemberRow[] {
@@ -117,11 +117,11 @@ function toSheetRows(rows: MemberRowInternal[], reactionUserSets: ReactionUserSe
   }));
 }
 
-/** ロール順（イケケモ → ケモ案内 → [ケモcafe] → ケモ裏方 → ケモ情報部）、同ロール内は名前の辞書順 */
+/** ロール順（イケケモ → ケモ案内 → ケモcafe → ケモ裏方 → ケモ情報部）、同ロール内は名前の辞書順 */
 const ROLE_SORT_ORDER: Record<SheetRole, number> = {
   イケケモ: 0,
   ケモ案内: 1,
-  '[ケモcafe]': 2,
+  ケモcafe: 2,
   ケモ裏方: 3,
   ケモ情報部: 4,
 };

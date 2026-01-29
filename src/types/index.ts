@@ -21,20 +21,20 @@ export type AttendanceStatus = '出席' | '欠席' | '未入力';
 
 /** リアクション表示ラベル（スプシ用） */
 export type ReactionDisplayLabel =
-  | '個室'
-  | '案内'
-  | 'サクラ'
-  | '欠席'
-  | '行けたら行く'
-  | '未入力';
+  | '個室🥂'
+  | '案内👔'
+  | 'サクラ🌸'
+  | '欠席❌'
+  | '行けたら行く🙇'
+  | '未入力🤔';
 
 /** ロール種別（シート用） */
-export type SheetRole = 'イケケモ' | 'ケモ案内' | '[ケモcafe]' | 'ケモ裏方' | 'ケモ情報部';
+export type SheetRole = 'イケケモ' | 'ケモ案内' | 'ケモcafe' | 'ケモ裏方' | 'ケモ情報部';
 
 /** スプシ送信用メンバー1行 */
 export interface SheetMemberRow {
   name: string;
-  /** リアクションに応じた表示（個室/案内/サクラ/欠席/行けたら行く/未入力） */
+  /** リアクションに応じた表示（個室🥂/案内👔/サクラ🌸/欠席❌/行けたら行く🙇/未入力🤔） */
   reactionLabel: ReactionDisplayLabel;
   role: SheetRole;
 }
