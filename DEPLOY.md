@@ -91,6 +91,12 @@ git push -u origin main
 - `DISCORD_TOKEN` と `CLIENT_ID` が正しく設定されているか確認
 - ログのエラーメッセージを確認
 
+### 「Used disallowed intents」が出る
+
+- **スプシ連携**（`SPREADSHEET_API_URL` 設定時）で **Guild Members** を使うため、Developer Portal で **Server Members Intent** を有効にする必要があります。
+- [Discord Developer Portal](https://discord.com/developers/applications) → 対象アプリ → **Bot** → **Privileged Gateway Intents** で **Server Members Intent** をオンにし、Bot を再起動または再デプロイしてください。
+- スプシ連携を使わない場合は `SPREADSHEET_API_URL` を未設定にすると、この Intent は使わず起動します。
+
 ### スラッシュコマンドが表示されない
 
 - Botがサーバーに招待されているか確認

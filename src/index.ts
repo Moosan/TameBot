@@ -13,14 +13,18 @@ import { registerReactionAggregate } from './features/reaction-aggregate';
 import type { Command } from './types';
 import { logger } from './utils';
 
-// Discord Bot クライアントの作成
+// スプシ連携時のみ GuildMembers（特権Intent）を使用
+const intents = [
+  GatewayIntentBits.Guilds,
+  GatewayIntentBits.GuildMessages,
+  GatewayIntentBits.GuildMessageReactions,
+];
+if (config.spreadsheetApiUrl) {
+  intents.push(GatewayIntentBits.GuildMembers);
+}
+
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers, // スプシ連携でロール別メンバー取得に必要（特権Intent）
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMessageReactions,
-  ],
+  intents,
   partials: [
     Partials.Message,
     Partials.Channel,
@@ -38,6 +42,9 @@ registerReactionAggregate(client);
 // Bot起動時の処理
 client.once('clientReady', async () => {
   logger.info(`✅ ${client.user?.tag} としてログインしました！`);
+  if (config.spreadsheetApiUrl) {
+    logger.info('📋 スプシ連携有効（Server Members Intent が Developer Portal で有効である必要があります）');
+  }
 
   // スラッシュコマンドの登録
   const rest = new REST().setToken(config.discordToken);
