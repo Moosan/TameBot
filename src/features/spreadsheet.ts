@@ -162,23 +162,51 @@ export function buildSpreadsheetPayload(
   };
 }
 
+/** GAS レスポンス（デバッグ時は logs が入る） */
+interface SpreadsheetApiResponse {
+  ok?: boolean;
+  error?: string | null;
+  logs?: string[];
+}
+
 /**
  * App Script Web App に POST する。
+ * DEBUG_SPREADSHEET=1 のときは payload に debug: true を付け、レスポンスの logs をログ出力する。
  */
 export async function sendToSpreadsheet(payload: SpreadsheetPayload): Promise<boolean> {
   const url = config.spreadsheetApiUrl;
   if (!url) return false;
 
+  const body = config.debugSpreadsheet ? { ...payload, debug: true } : payload;
+
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
+    const text = await res.text();
     if (!res.ok) {
-      logger.error('スプシAPI エラー:', res.status, await res.text());
+      logger.error('スプシAPI エラー:', res.status, text);
       return false;
     }
+
+    if (config.debugSpreadsheet) {
+      try {
+        const data: SpreadsheetApiResponse = JSON.parse(text);
+        logger.info(
+          `[DEBUG_SPREADSHEET] GAS レスポンス: ok=${data.ok}, error=${data.error ?? '(なし)'}`,
+        );
+        if (data.logs && data.logs.length > 0) {
+          logger.info('[DEBUG_SPREADSHEET] ---------- GAS 側ログ ----------');
+          data.logs.forEach((line) => logger.info('[DEBUG_SPREADSHEET]', line));
+          logger.info('[DEBUG_SPREADSHEET] ------------------------------');
+        }
+      } catch {
+        logger.info('[DEBUG_SPREADSHEET] GAS レスポンス（パースせず）:', text.slice(0, 200));
+      }
+    }
+
     logger.info('スプシ連携: 送信完了');
     return true;
   } catch (e) {
