@@ -138,6 +138,21 @@ function toSheetRows(rows: MemberRowInternal[]): SheetMemberRow[] {
   return rows.map(({ name, status, role }) => ({ name, status, role }));
 }
 
+/** ロール順（イケケモ → ケモ案内 → ケモ裏方）、同ロール内は名前の辞書順 */
+const ROLE_SORT_ORDER: Record<SheetRole, number> = {
+  イケケモ: 0,
+  ケモ案内: 1,
+  ケモ裏方: 2,
+};
+
+function sortMembersForSpreadsheet(members: SheetMemberRow[]): SheetMemberRow[] {
+  return [...members].sort((a, b) => {
+    const roleDiff = ROLE_SORT_ORDER[a.role] - ROLE_SORT_ORDER[b.role];
+    if (roleDiff !== 0) return roleDiff;
+    return (a.name || '').localeCompare(b.name || '', 'ja');
+  });
+}
+
 /**
  * 集計結果とメンバー一覧からスプシ送信用ペイロードを組み立てる。
  */
@@ -231,7 +246,7 @@ export async function runSpreadsheetSync(
 ): Promise<void> {
   const members = await fetchMembersFromMessage(message);
   resolveAttendance(members, reactionUserSets.absentUserIds, reactionUserSets.reactedUserIds);
-  const sheetRows = toSheetRows(members);
+  const sheetRows = sortMembersForSpreadsheet(toSheetRows(members));
 
   const payload = buildSpreadsheetPayload(sheetRows, aggregate);
 
