@@ -17,8 +17,26 @@ export const config = {
   /** リアクション集計のデバッグログ（DEBUG_REACTIONS=1 で有効） */
   debugReactions: process.env.DEBUG_REACTIONS === '1',
 
+  /** Discord へメッセージ送信しない（DEBUG_NO_DISCORD_SEND=1 で有効・ログのみ） */
+  debugNoDiscordSend: process.env.DEBUG_NO_DISCORD_SEND === '1',
+
   /** 集計結果の出力先スレッドID（指定しない場合は同じチャンネルに投稿） */
   resultThreadId: process.env.RESULT_THREAD_ID || '',
+
+  /** 欠席専用リアクション（このみのユーザー → 欠席） */
+  reactionAbsent: process.env.REACTION_ABSENT || '',
+
+  /** ロールID（イケケモ > ケモ案内 > ケモ裏方 の優先で割り振り） */
+  roleIkemo: process.env.ROLE_IKEMO || '',
+  roleAnnai: process.env.ROLE_ANNAI || '',
+  roleUraba: process.env.ROLE_URABATA || '',
+
+  /** スプシ連携: App Script Web App のURL（未設定ならスプシ送信なし） */
+  spreadsheetApiUrl: process.env.SPREADSHEET_API_URL || '',
+
+  /** スプシのシート名（可変） */
+  sheet1Name: process.env.SHEET1_NAME || 'シート1',
+  sheet2Name: process.env.SHEET2_NAME || 'シート2',
 };
 
 // 必須環境変数のチェック

@@ -17,6 +17,7 @@ import { logger } from './utils';
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers, // スプシ連携でロール別メンバー取得に必要（特権Intent）
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMessageReactions,
   ],

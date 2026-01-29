@@ -2,6 +2,7 @@ import type { Client, MessageReaction, Message } from 'discord.js';
 import { config } from '../config';
 import type { AggregateResult } from '../types';
 import { isSendableChannel, logger } from '../utils';
+import { runSpreadsheetSync, type ReactionUserSets } from './spreadsheet';
 
 const TRIGGER = config.reactionTrigger;
 
@@ -10,6 +11,7 @@ function emojiMatches(
   reaction: { emoji: { id: string | null; name: string | null } },
   value: string,
 ): boolean {
+  if (!value) return false;
   const emoji = reaction.emoji;
   if (emoji.id && value === emoji.id) return true;
   if (emoji.name && value === emoji.name) return true;
@@ -50,7 +52,9 @@ function logReactionDetails(reactions: Map<string, MessageReaction>): void {
     const r = list[i];
     const v = envVal(r);
     const triggerNote = isTrigger(r) ? ' [トリガー]' : '';
-    logger.debug(`  #${i + 1} id=${r.emoji.id ?? 'null'} name=${JSON.stringify(r.emoji.name)}${triggerNote}`);
+    logger.debug(
+      `  #${i + 1} id=${r.emoji.id ?? 'null'} name=${JSON.stringify(r.emoji.name)}${triggerNote}`,
+    );
 
     if (!isTrigger(r) && v) {
       if (labelIdx < 3) {
@@ -97,7 +101,6 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
     logger.debug(`集計対象 マッチ状況 A=${usersA.size} B=${usersB.size} C=${usersC.size}`);
   }
 
-  // 優先ルール: A > B > C。B から A にいる人、C から A or B にいる人を除く
   const onlyB = new Set(usersB);
   const onlyC = new Set(usersC);
   for (const id of usersA) {
@@ -116,6 +119,25 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
   return { countA, countB, countC, staff, guest, instance };
 }
 
+/**
+ * 欠席ユーザー・全リアクション用户のID集合を集める（トリガー・Bot除外）。
+ */
+async function collectReactionUserSets(message: Message): Promise<ReactionUserSets> {
+  const absentUserIds = new Set<string>();
+  const reactedUserIds = new Set<string>();
+
+  for (const r of message.reactions.cache.values()) {
+    if (emojiMatches(r, TRIGGER)) continue;
+    const ids = await fetchUserIds(r);
+    if (config.reactionAbsent && emojiMatches(r, config.reactionAbsent)) {
+      for (const id of ids) absentUserIds.add(id);
+    }
+    for (const id of ids) reactedUserIds.add(id);
+  }
+
+  return { absentUserIds, reactedUserIds };
+}
+
 /** 集計結果をテキストで整形 */
 export function formatResult(result: AggregateResult): string {
   return [
@@ -127,7 +149,6 @@ export function formatResult(result: AggregateResult): string {
   ].join('\n');
 }
 
-/** 同一メッセージへの連打対策: 直近で処理したメッセージIDと時刻 */
 const lastProcessed = new Map<string, number>();
 const DEBOUNCE_MS = 5000;
 
@@ -164,7 +185,6 @@ export function registerReactionAggregate(client: Client): void {
       const result = await aggregateFromMessage(message);
       if (!result) return;
 
-      // 出力先: RESULT_THREAD_ID が設定されていればそのスレッド、なければ同じチャンネル
       let targetChannel = channel;
       let targetName = channel.name;
 
@@ -182,13 +202,27 @@ export function registerReactionAggregate(client: Client): void {
         }
       }
 
-      await targetChannel.send(formatResult(result));
-      logger.info(
-        `📊 リアクション集計 送信完了 - チャンネル: ${targetName}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
-      );
+      if (config.debugNoDiscordSend) {
+        logger.info(
+          `[DEBUG_NO_DISCORD_SEND] 送信スキップ - チャンネル: ${targetName}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
+        );
+        logger.info('[DEBUG_NO_DISCORD_SEND] 本文:\n' + formatResult(result));
+      } else {
+        await targetChannel.send(formatResult(result));
+        logger.info(
+          `📊 リアクション集計 送信完了 - チャンネル: ${targetName}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
+        );
+      }
+
+      if (config.spreadsheetApiUrl) {
+        const reactionUserSets = await collectReactionUserSets(message);
+        await runSpreadsheetSync(message, result, reactionUserSets);
+      }
     } catch (e) {
       logger.error('リアクション集計エラー:', e);
-      await channel.send('リアクション集計の計算中にエラーが発生しました。').catch(() => {});
+      if (!config.debugNoDiscordSend) {
+        await channel.send('リアクション集計の計算中にエラーが発生しました。').catch(() => {});
+      }
     }
   });
 }

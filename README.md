@@ -9,6 +9,7 @@
   - スタッフ = A+B+C（重複なし・A→B→C の優先）、ゲスト = A×2、インスタンス人数 = スタッフ+ゲスト+1
   - トリガー・A/B/C は環境変数で変更可能（`.env` の `REACTION_*`）
   - メンバーが取れない場合 → [トラブルシューティング](./docs/REACTION_TROUBLESHOOTING.md) を参照
+- **スプシ連携**: `SPREADSHEET_API_URL` 設定時、トリガー実行ごとに **メッセージでロールメンションされたメンバー** の一覧（名前・出席/欠席/未入力・ロール）と集計結果を App Script 経由でスプシに送信。 [appscript/README](./appscript/README.md) 参照。
 - **定期実行スケジューラー**: 将来的に毎週特定の曜日・時間にロールメンション付きでメッセージを送る機能を追加可能
 
 ## セットアップ
@@ -48,7 +49,8 @@ npm --version
 3. 「Bot」タブに移動し、「Add Bot」をクリック
 4. 「Token」セクションで「Reset Token」をクリックしてトークンを取得（後で使用します）
 5. **「Privileged Gateway Intents」セクション**を確認
-   - 特権Intentは使用していません。`Guilds`・`Guild Messages`・`Guild Message Reactions` は通常のIntentで問題ありません。
+   - スプシ連携を使う場合は **Server Members Intent** を有効にする（ロール別メンバー取得に必要）。
+   - 使わない場合は `Guilds`・`Guild Messages`・`Guild Message Reactions` のみで可。
 6. 「OAuth2」→「URL Generator」に移動
    - Scopes: `bot`, `applications.commands` を選択
    - Bot Permissions: 必要に応じて権限を選択（最低限: 「Send Messages」）

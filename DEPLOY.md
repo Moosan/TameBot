@@ -37,7 +37,15 @@
 | `REACTION_B` | 集計対象 B（例: 🅱️） | — |
 | `REACTION_C` | 集計対象 C（例: ©️） | — |
 | `RESULT_THREAD_ID` | 集計結果の出力先スレッドID（指定しない場合は同じチャンネル） | — |
+| `REACTION_ABSENT` | 欠席専用リアクション（このみ → 欠席） | — |
+| `ROLE_IKEMO` | ロールID（イケケモ） | スプシ連携時 |
+| `ROLE_ANNAI` | ロールID（ケモ案内） | スプシ連携時 |
+| `ROLE_URABATA` | ロールID（ケモ裏方） | スプシ連携時 |
+| `SPREADSHEET_API_URL` | App Script Web App の URL（未設定ならスプシ送信なし） | — |
+| `SHEET1_NAME` | シート1の名前（メンバー一覧） | — |
+| `SHEET2_NAME` | シート2の名前（集計結果） | — |
 | `DEBUG_REACTIONS` | `1` でリアクション集計の詳細ログ出力（デバッグ用） | — |
+| `DEBUG_NO_DISCORD_SEND` | `1` で Discord へのメッセージ送信をスキップ（ログのみ・スプシ連携は実行） | — |
 
 ### 4. デプロイの確認
 
@@ -99,6 +107,13 @@ git push -u origin main
 - 詳細は [docs/REACTION_TROUBLESHOOTING.md](./docs/REACTION_TROUBLESHOOTING.md) を参照
 - **招待時の Bot 権限**で **Read Message History**（メッセージ履歴の閲覧）を付与し、**新しい招待URLで再招待**しているか確認
 - `DEBUG_REACTIONS=1` を設定して再デプロイし、ログで絵文字の一致・`fetch` エラーを確認
+
+### スプシ連携でメンバーが空・送信しない
+
+- **Server Members Intent** を有効にし、Bot を再招待しているか確認
+- 集計対象のメッセージに **イケケモ・ケモ案内・ケモ裏方** のロールメンション（`<@&ロールID>`）が含まれているか確認
+- `ROLE_IKEMO` / `ROLE_ANNAI` / `ROLE_URABATA` に正しいロールIDを設定しているか確認
+- App Script は [appscript/README](./appscript/README.md) の手順でデプロイし、**アクセス: 全員** にしているか確認
 
 ## 料金
 
