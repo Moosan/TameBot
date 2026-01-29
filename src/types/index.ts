@@ -19,13 +19,23 @@ export interface AggregateResult {
 /** 出席状況 */
 export type AttendanceStatus = '出席' | '欠席' | '未入力';
 
+/** リアクション表示ラベル（スプシ用） */
+export type ReactionDisplayLabel =
+  | '個室'
+  | '案内'
+  | 'サクラ'
+  | '欠席'
+  | '行けたら行く'
+  | '未入力';
+
 /** ロール種別（シート用） */
 export type SheetRole = 'イケケモ' | 'ケモ案内' | 'ケモ裏方';
 
 /** スプシ送信用メンバー1行 */
 export interface SheetMemberRow {
   name: string;
-  status: AttendanceStatus;
+  /** リアクションに応じた表示（個室/案内/サクラ/欠席/行けたら行く/未入力） */
+  reactionLabel: ReactionDisplayLabel;
   role: SheetRole;
 }
 

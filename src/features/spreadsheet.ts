@@ -2,7 +2,7 @@ import type { Message, GuildMember } from 'discord.js';
 import { config } from '../config';
 import type {
   AggregateResult,
-  AttendanceStatus,
+  ReactionDisplayLabel,
   SheetMemberRow,
   SheetRole,
   SpreadsheetPayload,
@@ -37,7 +37,6 @@ interface MemberRowInternal {
   userId: string;
   name: string;
   role: SheetRole;
-  status: AttendanceStatus;
 }
 
 /**
@@ -106,7 +105,6 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
       userId: member.id,
       name: member.displayName || member.user.username,
       role,
-      status: '未入力',
     });
   }
 
@@ -118,24 +116,30 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
   return rows;
 }
 
-/**
- * リアクション情報で出席状況を解決。
- * 欠席 > 出席 > 未入力
- */
-function resolveAttendance(
-  rows: MemberRowInternal[],
-  absentUserIds: Set<string>,
-  reactedUserIds: Set<string>,
-): void {
-  for (const row of rows) {
-    if (absentUserIds.has(row.userId)) row.status = '欠席';
-    else if (reactedUserIds.has(row.userId)) row.status = '出席';
-    else row.status = '未入力';
-  }
+export interface ReactionUserSets {
+  absentUserIds: Set<string>;
+  reactedUserIds: Set<string>;
+  userIdsReactedA: Set<string>;
+  userIdsReactedB: Set<string>;
+  userIdsReactedC: Set<string>;
 }
 
-function toSheetRows(rows: MemberRowInternal[]): SheetMemberRow[] {
-  return rows.map(({ name, status, role }) => ({ name, status, role }));
+/** 優先順: 欠席 > 個室(A) > 案内(B) > サクラ(C) > 行けたら行く(その他) > 未入力 */
+function computeReactionLabel(userId: string, sets: ReactionUserSets): ReactionDisplayLabel {
+  if (sets.absentUserIds.has(userId)) return '欠席';
+  if (sets.userIdsReactedA.has(userId)) return '個室';
+  if (sets.userIdsReactedB.has(userId)) return '案内';
+  if (sets.userIdsReactedC.has(userId)) return 'サクラ';
+  if (sets.reactedUserIds.has(userId)) return '行けたら行く';
+  return '未入力';
+}
+
+function toSheetRows(rows: MemberRowInternal[], reactionUserSets: ReactionUserSets): SheetMemberRow[] {
+  return rows.map(({ userId, name, role }) => ({
+    name,
+    reactionLabel: computeReactionLabel(userId, reactionUserSets),
+    role,
+  }));
 }
 
 /** ロール順（イケケモ → ケモ案内 → ケモ裏方）、同ロール内は名前の辞書順 */
@@ -230,11 +234,6 @@ export async function sendToSpreadsheet(payload: SpreadsheetPayload): Promise<bo
   }
 }
 
-export interface ReactionUserSets {
-  absentUserIds: Set<string>;
-  reactedUserIds: Set<string>;
-}
-
 /**
  * メッセージ・リアクション情報からメンバー一覧を組み立て、スプシ送信まで実行する。
  * SPREADSHEET_API_URL 未設定時は送信しない。
@@ -245,8 +244,7 @@ export async function runSpreadsheetSync(
   reactionUserSets: ReactionUserSets,
 ): Promise<void> {
   const members = await fetchMembersFromMessage(message);
-  resolveAttendance(members, reactionUserSets.absentUserIds, reactionUserSets.reactedUserIds);
-  const sheetRows = sortMembersForSpreadsheet(toSheetRows(members));
+  const sheetRows = sortMembersForSpreadsheet(toSheetRows(members, reactionUserSets));
 
   const payload = buildSpreadsheetPayload(sheetRows, aggregate);
 
@@ -255,7 +253,7 @@ export async function runSpreadsheetSync(
     logger.info('[DEBUG_SPREADSHEET] シート1:', payload.sheet1Name, '| シート2:', payload.sheet2Name);
     logger.info('[DEBUG_SPREADSHEET] メンバー数:', payload.members.length);
     payload.members.forEach((m, i) => {
-      logger.info(`[DEBUG_SPREADSHEET]   #${i + 1} ${m.name} | ${m.status} | ${m.role}`);
+      logger.info(`[DEBUG_SPREADSHEET]   #${i + 1} ${m.name} | ${m.reactionLabel} | ${m.role}`);
     });
     logger.info('[DEBUG_SPREADSHEET] 集計:', JSON.stringify(payload.aggregate));
     logger.info('[DEBUG_SPREADSHEET] ----------------------------------------');

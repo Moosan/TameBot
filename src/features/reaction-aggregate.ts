@@ -120,11 +120,14 @@ export async function aggregateFromMessage(message: Message): Promise<AggregateR
 }
 
 /**
- * 欠席ユーザー・全リアクション用户のID集合を集める（トリガー・Bot除外）。
+ * 欠席ユーザー・A/B/C・全リアクション用户のID集合を集める（トリガー・Bot除外）。
  */
 async function collectReactionUserSets(message: Message): Promise<ReactionUserSets> {
   const absentUserIds = new Set<string>();
   const reactedUserIds = new Set<string>();
+  const userIdsReactedA = new Set<string>();
+  const userIdsReactedB = new Set<string>();
+  const userIdsReactedC = new Set<string>();
 
   for (const r of message.reactions.cache.values()) {
     if (emojiMatches(r, TRIGGER)) continue;
@@ -132,10 +135,19 @@ async function collectReactionUserSets(message: Message): Promise<ReactionUserSe
     if (config.reactionAbsent && emojiMatches(r, config.reactionAbsent)) {
       for (const id of ids) absentUserIds.add(id);
     }
+    if (emojiMatches(r, config.reactionA)) for (const id of ids) userIdsReactedA.add(id);
+    else if (emojiMatches(r, config.reactionB)) for (const id of ids) userIdsReactedB.add(id);
+    else if (emojiMatches(r, config.reactionC)) for (const id of ids) userIdsReactedC.add(id);
     for (const id of ids) reactedUserIds.add(id);
   }
 
-  return { absentUserIds, reactedUserIds };
+  return {
+    absentUserIds,
+    reactedUserIds,
+    userIdsReactedA,
+    userIdsReactedB,
+    userIdsReactedC,
+  };
 }
 
 /** 集計結果をテキストで整形 */

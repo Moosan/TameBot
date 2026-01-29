@@ -69,13 +69,13 @@ function doPost(e) {
       sh1.clear();
       log('[GAS] シート1 clear OK');
 
-      sh1.getRange(1, 1, 1, 3).setValues([['メンバー名', '出席/欠席/未入力', 'ロール']]);
+      sh1.getRange(1, 1, 1, 3).setValues([['メンバー名', 'リアクション', 'ロール']]);
       sh1.getRange(1, 1, 1, 3).setFontWeight('bold');
       log('[GAS] シート1 ヘッダー書き込み OK');
 
       if (members.length > 0) {
         var rows = members.map(function (m) {
-          return [m.name || '', m.status || '未入力', m.role || ''];
+          return [m.name || '', m.reactionLabel || '未入力', m.role || ''];
         });
         sh1.getRange(2, 1, rows.length, 3).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');
