@@ -26,10 +26,11 @@ export const config = {
   /** 欠席専用リアクション（このみのユーザー → 欠席） */
   reactionAbsent: process.env.REACTION_ABSENT || '',
 
-  /** ロールID（イケケモ > ケモ案内 > ケモ裏方 の優先で割り振り） */
+  /** ロールID（イケケモ > ケモ案内 > ケモ裏方 > ケモ情報部 の優先で割り振り） */
   roleIkemo: process.env.ROLE_IKEMO || '',
   roleAnnai: process.env.ROLE_ANNAI || '',
   roleUraba: process.env.ROLE_URABATA || '',
+  roleJohobu: process.env.ROLE_JOHOBU || '',
 
   /** スプシ連携: App Script Web App のURL（未設定ならスプシ送信なし） */
   spreadsheetApiUrl: process.env.SPREADSHEET_API_URL || '',

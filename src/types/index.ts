@@ -29,7 +29,7 @@ export type ReactionDisplayLabel =
   | '未入力';
 
 /** ロール種別（シート用） */
-export type SheetRole = 'イケケモ' | 'ケモ案内' | 'ケモ裏方';
+export type SheetRole = 'イケケモ' | 'ケモ案内' | 'ケモ裏方' | 'ケモ情報部';
 
 /** スプシ送信用メンバー1行 */
 export interface SheetMemberRow {

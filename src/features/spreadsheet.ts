@@ -9,20 +9,13 @@ import type {
 } from '../types';
 import { logger } from '../utils';
 
-const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', 'ケモ裏方'];
+const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', 'ケモ裏方', 'ケモ情報部'];
 const ROLE_IDS: Record<SheetRole, string> = {
   イケケモ: config.roleIkemo,
   ケモ案内: config.roleAnnai,
   ケモ裏方: config.roleUraba,
+  ケモ情報部: config.roleJohobu,
 };
-
-function roleIdsMentionedInMessage(content: string): Set<string> {
-  const mentioned = new Set<string>();
-  const re = /<@&(\d+)>/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(content)) !== null) mentioned.add(m[1]);
-  return mentioned;
-}
 
 function assignedRole(member: GuildMember): SheetRole | null {
   for (const r of ROLE_ORDER) {
@@ -40,8 +33,9 @@ interface MemberRowInternal {
 }
 
 /**
- * メッセージでメンションされているロールに属するメンバーを収集。
- * 優先ルール: イケケモ > ケモ案内 > ケモ裏方 で1ロールに割り振る。
+ * 4ロール（イケケモ・ケモ案内・ケモ裏方・ケモ情報部）のいずれかに属するメンバーを収集。
+ * メッセージのロールメンションには依存せず、常に4ロール全員を取得する。
+ * 優先ルール: イケケモ > ケモ案内 > ケモ裏方 > ケモ情報部 で1ロールに割り振る。
  */
 async function fetchMembersFromMessage(message: Message): Promise<MemberRowInternal[]> {
   const guild = message.guild;
@@ -50,33 +44,14 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
     return [];
   }
 
-  const mentioned = roleIdsMentionedInMessage(message.content ?? '');
-  const ourRoleIds = Object.values(ROLE_IDS).filter(Boolean);
-  const relevant = ourRoleIds.filter((id) => mentioned.has(id));
-
   if (config.debugSpreadsheet) {
     logger.info(
-      '[DEBUG_SPREADSHEET] メンバー取得: メッセージ内ロールメンションID =',
-      [...mentioned].join(', ') || '(なし)',
-    );
-    logger.info(
-      '[DEBUG_SPREADSHEET] メンバー取得: 設定ロール イケケモ=%s ケモ案内=%s ケモ裏方=%s',
+      '[DEBUG_SPREADSHEET] メンバー取得: 設定ロール イケケモ=%s ケモ案内=%s ケモ裏方=%s ケモ情報部=%s',
       config.roleIkemo || '(未設定)',
       config.roleAnnai || '(未設定)',
       config.roleUraba || '(未設定)',
+      config.roleJohobu || '(未設定)',
     );
-    logger.info(
-      '[DEBUG_SPREADSHEET] メンバー取得: 一致（対象）= %s',
-      relevant.length ? relevant.join(', ') : '(なし)',
-    );
-  }
-
-  if (relevant.length === 0) {
-    if (config.debugSpreadsheet)
-      logger.info(
-        '[DEBUG_SPREADSHEET] メンバー取得スキップ: 対象ロールがメッセージにメンションされていないか、設定ロールIDと一致しません',
-      );
-    return [];
   }
 
   try {
@@ -96,8 +71,6 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
     if (member.user.bot) continue;
     const role = assignedRole(member);
     if (!role) continue;
-    const rid = ROLE_IDS[role];
-    if (!relevant.includes(rid)) continue;
     if (seen.has(member.id)) continue;
     seen.add(member.id);
 
@@ -110,7 +83,7 @@ async function fetchMembersFromMessage(message: Message): Promise<MemberRowInter
 
   if (config.debugSpreadsheet && rows.length === 0)
     logger.info(
-      '[DEBUG_SPREADSHEET] メンバー取得: 対象ロール所持メンバー0人（ギルド内にイケケモ・ケモ案内・ケモ裏方のいずれも持つメンバーがいないか、いずれもBot）',
+      '[DEBUG_SPREADSHEET] メンバー取得: 対象ロール所持メンバー0人（ギルド内に4ロールのいずれも持つメンバーがいないか、いずれもBot）',
     );
 
   return rows;
@@ -142,11 +115,12 @@ function toSheetRows(rows: MemberRowInternal[], reactionUserSets: ReactionUserSe
   }));
 }
 
-/** ロール順（イケケモ → ケモ案内 → ケモ裏方）、同ロール内は名前の辞書順 */
+/** ロール順（イケケモ → ケモ案内 → ケモ裏方 → ケモ情報部）、同ロール内は名前の辞書順 */
 const ROLE_SORT_ORDER: Record<SheetRole, number> = {
   イケケモ: 0,
   ケモ案内: 1,
   ケモ裏方: 2,
+  ケモ情報部: 3,
 };
 
 function sortMembersForSpreadsheet(members: SheetMemberRow[]): SheetMemberRow[] {
