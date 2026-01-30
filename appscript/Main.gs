@@ -50,10 +50,11 @@ function doPost(e) {
 
     var sheet1Name = payload.sheet1Name || 'シート1';
     var sheet2Name = payload.sheet2Name || 'シート2';
+    var retrievedAt = payload.retrievedAt || '';
     var members = payload.members || [];
     var aggregate = payload.aggregate || {};
 
-    log('[GAS] シート1名=' + sheet1Name + ', シート2名=' + sheet2Name + ', メンバー数=' + members.length);
+    log('[GAS] シート1名=' + sheet1Name + ', シート2名=' + sheet2Name + ', 取得日時=' + retrievedAt + ', メンバー数=' + members.length);
 
     try {
       log('[GAS] getActiveSpreadsheet() 呼び出し');
@@ -69,15 +70,19 @@ function doPost(e) {
       sh1.clear();
       log('[GAS] シート1 clear OK');
 
-      sh1.getRange(1, 1, 1, 3).setValues([['メンバー名', 'リアクション', 'ロール']]);
-      sh1.getRange(1, 1, 1, 3).setFontWeight('bold');
+      sh1.getRange(1, 1, 1, 2).setValues([['取得日時', retrievedAt]]);
+      sh1.getRange(1, 1, 1, 2).setFontWeight('bold');
+      log('[GAS] シート1 取得日時書き込み OK');
+
+      sh1.getRange(2, 1, 2, 3).setValues([['メンバー名', 'リアクション', 'ロール']]);
+      sh1.getRange(2, 1, 2, 3).setFontWeight('bold');
       log('[GAS] シート1 ヘッダー書き込み OK');
 
       if (members.length > 0) {
         var rows = members.map(function (m) {
           return [m.name || '', m.reactionLabel || '未入力🤔', m.role || ''];
         });
-        sh1.getRange(2, 1, rows.length, 3).setValues(rows);
+        sh1.getRange(3, 1, 2 + rows.length, 3).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');
       } else {
         log('[GAS] シート1 データ行なし（メンバー0件）');

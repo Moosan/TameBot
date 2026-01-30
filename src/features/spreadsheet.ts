@@ -7,7 +7,7 @@ import type {
   SheetRole,
   SpreadsheetPayload,
 } from '../types';
-import { logger } from '../utils';
+import { formatRetrievedAt, logger } from '../utils';
 
 const ROLE_ORDER: SheetRole[] = ['イケケモ', 'ケモ案内', 'ケモcafe', 'ケモ裏方', 'ケモ情報部'];
 const ROLE_IDS: Record<SheetRole, string> = {
@@ -146,6 +146,7 @@ export function buildSpreadsheetPayload(
   return {
     sheet1Name: sheet1Name ?? config.sheet1Name,
     sheet2Name: sheet2Name ?? config.sheet2Name,
+    retrievedAt: formatRetrievedAt(),
     members,
     aggregate: {
       イケケモ: aggregate.countA,
@@ -227,6 +228,7 @@ export async function runSpreadsheetSync(
 
   if (config.debugSpreadsheet) {
     logger.info('[DEBUG_SPREADSHEET] ---------- スプシ送信予定データ ----------');
+    logger.info('[DEBUG_SPREADSHEET] 取得日時:', payload.retrievedAt ?? '(なし)');
     logger.info('[DEBUG_SPREADSHEET] シート1:', payload.sheet1Name, '| シート2:', payload.sheet2Name);
     logger.info('[DEBUG_SPREADSHEET] メンバー数:', payload.members.length);
     payload.members.forEach((m, i) => {

@@ -1,7 +1,7 @@
 import type { Client, MessageReaction, Message } from 'discord.js';
 import { config } from '../config';
 import type { AggregateResult } from '../types';
-import { isSendableChannel, logger } from '../utils';
+import { formatRetrievedAt, isSendableChannel, logger } from '../utils';
 import { runSpreadsheetSync, type ReactionUserSets } from './spreadsheet';
 
 const TRIGGER = config.reactionTrigger;
@@ -150,15 +150,17 @@ async function collectReactionUserSets(message: Message): Promise<ReactionUserSe
   };
 }
 
-/** 集計結果をテキストで整形 */
+/** 集計結果をテキストで整形（先頭に取得日時 mm/dd hh:mm を付与） */
 export function formatResult(result: AggregateResult): string {
-  return [
+  const retrievedAt = formatRetrievedAt();
+  const body = [
     `**リアクション集計結果**`,
     `・イケケモ: ${result.countA}人 / 案内: ${result.countB}人 / サクラ: ${result.countC}人`,
     `・スタッフ: ${result.staff}人 (イケケモ+案内+サクラ)`,
     `・ゲスト: ${result.guest}人 (イケケモ×2)`,
     `・インスタンス人数: **${result.instance}** (スタッフ+ゲスト+Nekodon)`,
   ].join('\n');
+  return `📅 ${retrievedAt}\n\n${body}`;
 }
 
 const lastProcessed = new Map<string, number>();

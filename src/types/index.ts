@@ -43,6 +43,8 @@ export interface SheetMemberRow {
 export interface SpreadsheetPayload {
   sheet1Name: string;
   sheet2Name: string;
+  /** データ取得日時（mm/dd hh:mm） */
+  retrievedAt?: string;
   members: SheetMemberRow[];
   aggregate: {
     イケケモ: number;
