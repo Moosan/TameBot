@@ -1,11 +1,22 @@
+const JST = 'Asia/Tokyo';
+
 /**
- * データ取得日時を mm/dd hh:mm 形式で返す
+ * データ取得日時を JST で mm/dd hh:mm 形式で返す
  */
 export function formatRetrievedAt(): string {
   const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: JST,
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  const mm = get('month').padStart(2, '0');
+  const dd = get('day').padStart(2, '0');
+  const hh = get('hour').padStart(2, '0');
+  const min = get('minute').padStart(2, '0');
   return `${mm}/${dd} ${hh}:${min}`;
 }

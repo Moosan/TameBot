@@ -70,19 +70,15 @@ function doPost(e) {
       sh1.clear();
       log('[GAS] シート1 clear OK');
 
-      sh1.getRange(1, 1, 1, 2).setValues([['取得日時', retrievedAt]]);
-      sh1.getRange(1, 1, 1, 2).setFontWeight('bold');
-      log('[GAS] シート1 取得日時書き込み OK');
-
-      sh1.getRange(2, 1, 2, 3).setValues([['メンバー名', 'リアクション', 'ロール']]);
-      sh1.getRange(2, 1, 2, 3).setFontWeight('bold');
+      sh1.getRange(1, 1, 1, 3).setValues([['メンバー名', 'リアクション', 'ロール']]);
+      sh1.getRange(1, 1, 1, 3).setFontWeight('bold');
       log('[GAS] シート1 ヘッダー書き込み OK');
 
       if (members.length > 0) {
         var rows = members.map(function (m) {
           return [m.name || '', m.reactionLabel || '未入力🤔', m.role || ''];
         });
-        sh1.getRange(3, 1, 2 + rows.length, 3).setValues(rows);
+        sh1.getRange(2, 1, 1 + rows.length, 3).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');
       } else {
         log('[GAS] シート1 データ行なし（メンバー0件）');
@@ -97,13 +93,17 @@ function doPost(e) {
       sh2.clear();
       log('[GAS] シート2 clear OK');
 
+      sh2.getRange(1, 1, 1, 2).setValues([['取得日時', retrievedAt]]);
+      sh2.getRange(1, 1, 1, 2).setFontWeight('bold');
+      log('[GAS] シート2 取得日時書き込み OK');
+
       var items = ['イケケモ', '案内', 'サクラ', 'スタッフ', 'ゲスト', 'インスタンス'];
       var aggRows = [['項目', '値']];
       items.forEach(function (k) {
         aggRows.push([k, aggregate[k] != null ? aggregate[k] : '']);
       });
-      sh2.getRange(1, 1, aggRows.length, 2).setValues(aggRows);
-      sh2.getRange(1, 1, 1, 2).setFontWeight('bold');
+      sh2.getRange(2, 1, 1 + aggRows.length, 2).setValues(aggRows);
+      sh2.getRange(2, 1, 2, 2).setFontWeight('bold');
       log('[GAS] シート2 集計書き込み OK (行数: ' + aggRows.length + ')');
 
       result.ok = true;
