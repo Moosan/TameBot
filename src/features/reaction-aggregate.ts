@@ -2,7 +2,27 @@ import type { Client, MessageReaction, Message } from 'discord.js';
 import { config } from '../config';
 import type { AggregateResult } from '../types';
 import { formatRetrievedAt, isSendableChannel, logger } from '../utils';
+import type { SendableChannel } from '../utils/channel';
 import { runSpreadsheetSync, type ReactionUserSets } from './spreadsheet';
+
+/** 同じチャンネル／スレッド内の Bot の過去メッセージをすべて削除する */
+async function deleteBotMessagesInChannel(
+  channel: SendableChannel,
+  client: Client,
+): Promise<void> {
+  const botId = client.user?.id;
+  if (!botId) return;
+  const maxLoops = 20; // 最大 20 × 100 件まで取得して削除
+  for (let loop = 0; loop < maxLoops; loop++) {
+    const messages = await channel.messages.fetch({ limit: 100 });
+    const botMessages = messages.filter((m) => m.author.id === botId);
+    if (botMessages.size === 0) break;
+    for (const [, m] of botMessages) {
+      await m.delete().catch((e) => logger.error('Botメッセージ削除失敗:', e));
+    }
+    if (messages.size < 100) break;
+  }
+}
 
 const TRIGGER = config.reactionTrigger;
 
@@ -222,6 +242,7 @@ export function registerReactionAggregate(client: Client): void {
         );
         logger.info('[DEBUG_NO_DISCORD_SEND] 本文:\n' + formatResult(result));
       } else {
+        await deleteBotMessagesInChannel(targetChannel, client);
         await targetChannel.send(formatResult(result));
         logger.info(
           `📊 リアクション集計 送信完了 - チャンネル: ${targetName}, スタッフ: ${result.staff}, ゲスト: ${result.guest}, インスタンス: ${result.instance}`,
