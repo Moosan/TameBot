@@ -93,18 +93,18 @@ function doPost(e) {
       sh2.clear();
       log('[GAS] シート2 clear OK');
 
-      sh2.getRange(1, 1, 1, 2).setValues([['取得日時', retrievedAt]]);
-      sh2.getRange(1, 1, 1, 2).setFontWeight('bold');
-      log('[GAS] シート2 取得日時書き込み OK');
-
       var items = ['イケケモ', '案内', 'サクラ', 'スタッフ', 'ゲスト', 'インスタンス'];
       var aggRows = [['項目', '値']];
       items.forEach(function (k) {
         aggRows.push([k, aggregate[k] != null ? aggregate[k] : '']);
       });
-      sh2.getRange(2, 1, aggRows.length, 2).setValues(aggRows);
-      sh2.getRange(2, 1, 2, 2).setFontWeight('bold');
+      sh2.getRange(1, 1, aggRows.length, 2).setValues(aggRows);
+      sh2.getRange(1, 1, 1, 2).setFontWeight('bold');
       log('[GAS] シート2 集計書き込み OK (行数: ' + aggRows.length + ')');
+
+      sh2.getRange(1 + aggRows.length, 1, 1 + aggRows.length, 2).setValues([['取得日時', retrievedAt]]);
+      sh2.getRange(1 + aggRows.length, 1, 1 + aggRows.length, 2).setFontWeight('bold');
+      log('[GAS] シート2 取得日時書き込み OK');
 
       result.ok = true;
       log('[GAS] 処理完了 OK');
