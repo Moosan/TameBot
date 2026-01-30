@@ -17,6 +17,22 @@
  * 自動で debug: true が付き、デプロイ先ログに GAS のログが出力されます。
  */
 
+/** シート1: メンバー一覧の列数（メンバー名・リアクション・ロール） */
+var SHEET1_NUM_COLS = 3;
+/** シート1: ヘッダー行（1行目） */
+var SHEET1_HEADER_ROW = 1;
+/** シート1: データ開始行（2行目） */
+var SHEET1_DATA_START_ROW = 2;
+
+/** シート2: 集計の列数（項目・値） */
+var SHEET2_NUM_COLS = 2;
+/** シート2: ヘッダー行（1行目） */
+var SHEET2_HEADER_ROW = 1;
+/** 1行分の範囲を指定するときの行数 */
+var ROWS_ONE = 1;
+/** 先頭列（A列） */
+var COL_A = 1;
+
 function doPost(e) {
   var result = { ok: false, error: null, logs: [] };
   var debug = false;
@@ -70,15 +86,15 @@ function doPost(e) {
       sh1.clear();
       log('[GAS] シート1 clear OK');
 
-      sh1.getRange(1, 1, 1, 3).setValues([['メンバー名', 'リアクション', 'ロール']]);
-      sh1.getRange(1, 1, 1, 3).setFontWeight('bold');
+      sh1.getRange(SHEET1_HEADER_ROW, COL_A, ROWS_ONE, SHEET1_NUM_COLS).setValues([['メンバー名', 'リアクション', 'ロール']]);
+      sh1.getRange(SHEET1_HEADER_ROW, COL_A, ROWS_ONE, SHEET1_NUM_COLS).setFontWeight('bold');
       log('[GAS] シート1 ヘッダー書き込み OK');
 
       if (members.length > 0) {
         var rows = members.map(function (m) {
           return [m.name || '', m.reactionLabel || '未入力🤔', m.role || ''];
         });
-        sh1.getRange(2, 1, rows.length, 3).setValues(rows);
+        sh1.getRange(SHEET1_DATA_START_ROW, COL_A, rows.length, SHEET1_NUM_COLS).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');
       } else {
         log('[GAS] シート1 データ行なし（メンバー0件）');
@@ -98,12 +114,13 @@ function doPost(e) {
       items.forEach(function (k) {
         aggRows.push([k, aggregate[k] != null ? aggregate[k] : '']);
       });
-      sh2.getRange(1, 1, aggRows.length, 2).setValues(aggRows);
-      sh2.getRange(1, 1, 1, 2).setFontWeight('bold');
+      sh2.getRange(SHEET2_HEADER_ROW, COL_A, aggRows.length, SHEET2_NUM_COLS).setValues(aggRows);
+      sh2.getRange(SHEET2_HEADER_ROW, COL_A, ROWS_ONE, SHEET2_NUM_COLS).setFontWeight('bold');
+      sh2.getRange(aggRows.length, COL_A, ROWS_ONE, SHEET2_NUM_COLS).setFontWeight('bold');
       log('[GAS] シート2 集計書き込み OK (行数: ' + aggRows.length + ')');
 
-      sh2.getRange(1 + aggRows.length, 1, 1, 2).setValues([['取得日時', retrievedAt]]);
-      sh2.getRange(1 + aggRows.length, 1, 1, 2).setFontWeight('bold');
+      sh2.getRange(SHEET2_HEADER_ROW + aggRows.length, COL_A, ROWS_ONE, SHEET2_NUM_COLS).setValues([['取得日時', retrievedAt]]);
+      sh2.getRange(SHEET2_HEADER_ROW + aggRows.length, COL_A, ROWS_ONE, SHEET2_NUM_COLS).setFontWeight('bold');
       log('[GAS] シート2 取得日時書き込み OK');
 
       result.ok = true;
