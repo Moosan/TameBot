@@ -78,7 +78,7 @@ function doPost(e) {
         var rows = members.map(function (m) {
           return [m.name || '', m.reactionLabel || '未入力🤔', m.role || ''];
         });
-        sh1.getRange(2, 1, 1 + rows.length, 3).setValues(rows);
+        sh1.getRange(2, 1, rows.length, 3).setValues(rows);
         log('[GAS] シート1 データ行書き込み OK (行数: ' + rows.length + ')');
       } else {
         log('[GAS] シート1 データ行なし（メンバー0件）');
@@ -102,7 +102,7 @@ function doPost(e) {
       items.forEach(function (k) {
         aggRows.push([k, aggregate[k] != null ? aggregate[k] : '']);
       });
-      sh2.getRange(2, 1, 1 + aggRows.length, 2).setValues(aggRows);
+      sh2.getRange(2, 1, aggRows.length, 2).setValues(aggRows);
       sh2.getRange(2, 1, 2, 2).setFontWeight('bold');
       log('[GAS] シート2 集計書き込み OK (行数: ' + aggRows.length + ')');
 
