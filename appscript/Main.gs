@@ -102,8 +102,8 @@ function doPost(e) {
       sh2.getRange(1, 1, 1, 2).setFontWeight('bold');
       log('[GAS] シート2 集計書き込み OK (行数: ' + aggRows.length + ')');
 
-      sh2.getRange(1 + aggRows.length, 1, 1 + aggRows.length, 2).setValues([['取得日時', retrievedAt]]);
-      sh2.getRange(1 + aggRows.length, 1, 1 + aggRows.length, 2).setFontWeight('bold');
+      sh2.getRange(1 + aggRows.length, 1, 1, 2).setValues([['取得日時', retrievedAt]]);
+      sh2.getRange(1 + aggRows.length, 1, 1, 2).setFontWeight('bold');
       log('[GAS] シート2 取得日時書き込み OK');
 
       result.ok = true;
